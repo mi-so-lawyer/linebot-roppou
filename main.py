@@ -26,10 +26,11 @@ try:
         law_map[entry["lawName"]] = entry["lawId"]
         for alias in entry.get("aliases", []):
             law_map[alias] = entry["lawId"]
-    log("🔍 law_map構築完了。キー一覧（上位10件）:")
-    for i, key in enumerate(list(law_map.keys())[:10]):
+    log("🔍 law_map キー一覧（上位20件）:")
+    for i, key in enumerate(list(law_map.keys())[:20]):
         log(f"  {i+1}. {key} → {law_map[key]}")
     log(f"✅ '憲法' in law_map? → {'憲法' in law_map}")
+    log(f"✅ '民法' in law_map? → {'民法' in law_map}")
 except Exception as e:
     log(f"lawlist.json 読み込み失敗: {e}")
     lawlist = []
