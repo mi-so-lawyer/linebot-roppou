@@ -76,6 +76,8 @@ def handle_message(event):
             headers = {"Accept": "application/json"}
             log(f"🌐 fallback URL: {fallback_url}")
             full_res = requests.get(fallback_url, headers=headers)
+            log(f"🌐 fallback status = {full_res.status_code}")
+            log(f"🌐 fallback raw = {full_res.text[:500]}")
             full_res.raise_for_status()
             doc = full_res.json()
             articles = doc.get("Law", {}).get("Article", [])
