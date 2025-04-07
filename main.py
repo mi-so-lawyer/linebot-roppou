@@ -21,7 +21,11 @@ def normalize_num(num):
 try:
     with open("lawlist.json", encoding="utf-8") as f:
         lawlist = json.load(f)
-    law_map = {entry["lawName"]: entry["lawId"] for entry in lawlist}
+    law_map = {}
+    for entry in lawlist:
+        law_map[entry["lawName"]] = entry["lawId"]
+        for alias in entry.get("aliases", []):
+            law_map[alias] = entry["lawId"]
 except Exception as e:
     log(f"lawlist.json 読み込み失敗: {e}")
     lawlist = []
@@ -52,7 +56,7 @@ def handle_message(event):
     law, article = match.groups()
     article = normalize_num(article.translate(str.maketrans("０１２３４５６７８９", "0123456789")))
     log(f"送られた法令名：{law}")
-    law_id = next((law_map[name] for name in law_map if law.startswith(name)), None)
+    law_id = law_map.get(law)
     log(f"取得した law_id：{law_id}")
 
     if not law_id:
