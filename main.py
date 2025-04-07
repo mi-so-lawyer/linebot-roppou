@@ -26,6 +26,10 @@ try:
         law_map[entry["lawName"]] = entry["lawId"]
         for alias in entry.get("aliases", []):
             law_map[alias] = entry["lawId"]
+    log("🔍 law_map構築完了。キー一覧（上位10件）:")
+    for i, key in enumerate(list(law_map.keys())[:10]):
+        log(f"  {i+1}. {key} → {law_map[key]}")
+    log(f"✅ '憲法' in law_map? → {'憲法' in law_map}")
 except Exception as e:
     log(f"lawlist.json 読み込み失敗: {e}")
     lawlist = []
@@ -65,45 +69,7 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
         return
 
-    try:
-        log("▶ 通常取得開始")
-        url = f"https://elaws.e-gov.go.jp/api/1/articles?lawId={law_id}&article={article}"
-        res = requests.get(url)
-        res.raise_for_status()
-        data = res.json()
-        text_data = data["Article"][0]["Paragraph"][0]["Sentence"][0]["Text"]
-        reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
-        log(f"通常取得 reply = {reply!r}")
-    except Exception as e:
-        log(f"通常取得失敗、fallbackへ: {e}")
-        try:
-            fallback_url = f"https://elaws.e-gov.go.jp/api/1/lawdata/{law_id}"
-            log(f"🌐 fallback URL: {fallback_url}")
-            xml_res = requests.get(fallback_url)
-            xml_res.raise_for_status()
-            root = ET.fromstring(xml_res.text)
-
-            text_data = None
-            for article_elem in root.findall(".//Article"):
-                raw = article_elem.get("Num", "")
-                normalized = normalize_num(raw)
-                log(f"XML比較: {normalized} == {article}")
-                if normalized == article:
-                    sentence = article_elem.find(".//Sentence")
-                    if sentence is not None:
-                        text_data = sentence.text
-                        break
-
-            if text_data is not None:
-                reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
-                log(f"XML fallback取得 reply = {reply!r}")
-            else:
-                reply = "取得に失敗しました。"
-                log(f"XML fallback取得失敗 reply = {reply!r}")
-        except Exception as e:
-            reply = "取得に失敗しました。"
-            log(f"fallbackも例外: {e}")
-
+    reply = f"【{law} 第{article}条】\n（ダミー本文）\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
     log(f"✅ 最終reply = {reply!r}")
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
 
