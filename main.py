@@ -53,27 +53,41 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
         return
 
-    url = f"https://elaws.e-gov.go.jp/api/1/articles?lawId={law_id}&article={article}"
     try:
+        url = f"https://elaws.e-gov.go.jp/api/1/articles?lawId={law_id}&article={article}"
         res = requests.get(url)
-        print("=== ステータスコード ===", res.status_code)
-        print("=== レスポンステキスト ===")
-        print(res.text)
         res.raise_for_status()
         data = res.json()
-        print("=== e-Gov API レスポンス ===")
-        print(json.dumps(data, ensure_ascii=False, indent=2))
         text_data = data["Article"][0]["Paragraph"][0]["Sentence"][0]["Text"]
-        reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
     except Exception as e:
-        print("=== 例外エラー ===")
-        print(e)
+        print("通常取得失敗、fallbackへ:", e)
+        # fallback: 全文取得から探す
+        try:
+            fallback_url = f"https://elaws.e-gov.go.jp/api/1/lawdata/{law_id}"
+            full_res = requests.get(fallback_url)
+            full_res.raise_for_status()
+            doc = full_res.json()
+            articles = doc.get("Law", {}).get("Article", [])
+            for a in articles:
+                if a.get("Num") == article:
+                    text_data = a["Paragraph"][0]["Sentence"][0]["Text"]
+                    break
+            else:
+                text_data = None
+        except Exception as e:
+            print("fallbackも失敗:", e)
+            text_data = None
+
+    if text_data:
+        reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
+    else:
         reply = (
             "取得に失敗しました。\n"
             "・法令名や条番号に誤りがある\n"
             "・対応していない法令かもしれません\n"
             "・または通信タイムアウトの可能性があります"
         )
+
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
 
 if __name__ == "__main__":
