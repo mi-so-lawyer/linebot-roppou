@@ -8,7 +8,8 @@ line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 
 def normalize_num(num):
-    num = re.sub(r"[第条]", "", num)
+    num = re.sub(r"[第条の]", "", num)
+    num = num.replace("_", "")
     num = num.translate(str.maketrans("〇一二三四五六七八九", "0123456789"))
     return num
 
@@ -35,7 +36,7 @@ def callback():
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     text = event.message.text.strip()
-    match = re.match(r"(.+?)第?([0-9０-９一二三四五六七八九十百千万]+)条", text)
+    match = re.match(r"(.+?)第?([0-9０-９一二三四五六七八九十百千万]+(?:条の)?[0-9０-９一二三四五六七八九十百千万]*)条", text)
     if not match:
         reply = (
             "法令名＋条番号の形式で送ってください（例：民法709条）"
@@ -44,7 +45,7 @@ def handle_message(event):
         return
 
     law, article = match.groups()
-    article = re.sub(r"[第条]", "", article).translate(str.maketrans("０１２３４５６７８９", "0123456789"))
+    article = normalize_num(article.translate(str.maketrans("０１２３４５６７８９", "0123456789")))
     print(f"送られた法令名：{law}")
     law_id = next((law_map[name] for name in law_map if law.startswith(name)), None)
     print(f"取得した law_id：{law_id}")
