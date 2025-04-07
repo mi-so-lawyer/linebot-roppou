@@ -35,6 +35,7 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
+    print("メッセージ受信処理開始")
     text = event.message.text.strip()
     match = re.match(r"(.+?)第?([0-9０-９一二三四五六七八九十百千万]+(?:条の)?[0-9０-９一二三四五六七八九十百千万]*)条", text)
     if not match:
@@ -62,14 +63,18 @@ def handle_message(event):
         return
 
     try:
+        print("通常取得ブロック突入")
         url = f"https://elaws.e-gov.go.jp/api/1/articles?lawId={law_id}&article={article}"
         res = requests.get(url)
         res.raise_for_status()
         data = res.json()
         text_data = data["Article"][0]["Paragraph"][0]["Sentence"][0]["Text"]
+        reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
+        print(f"通常取得 reply = {reply!r}")
     except Exception as e:
         print("通常取得失敗、fallbackへ:", e)
         try:
+            print("fallback取得ブロック突入")
             fallback_url = f"https://elaws.e-gov.go.jp/api/1/lawdata/{law_id}"
             headers = {"Accept": "application/json"}
             full_res = requests.get(fallback_url, headers=headers)
@@ -91,19 +96,20 @@ def handle_message(event):
                         sentences = [sentences]
                     text_data = sentences[0].get("Text")
                     break
+            if text_data is not None:
+                reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
+                print(f"fallback取得 reply = {reply!r}")
+            else:
+                raise ValueError("条文見つからず")
         except Exception as e:
             print("fallbackも失敗:", e)
-            text_data = None
-
-    if text_data is not None:
-        reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
-    else:
-        reply = (
-            "取得に失敗しました。\n"
-            "・法令名や条番号に誤りがある\n"
-            "・対応していない法令かもしれません\n"
-            "・または通信タイムアウトの可能性があります"
-        )
+            reply = (
+                "取得に失敗しました。\n"
+                "・法令名や条番号に誤りがある\n"
+                "・対応していない法令かもしれません\n"
+                "・または通信タイムアウトの可能性があります"
+            )
+            print(f"エラーメッセージ reply = {reply!r}")
 
     print(f"最終reply = {reply!r}")
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
