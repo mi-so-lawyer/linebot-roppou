@@ -70,10 +70,10 @@ def handle_message(event):
             fallback_url = f"https://elaws.e-gov.go.jp/api/1/lawdata/{law_id}"
             headers = {"Accept": "application/json"}
             full_res = requests.get(fallback_url, headers=headers)
+            print("fallback ステータスコード:", full_res.status_code)
+            print("fallback レスポンステキスト:", full_res.text)
             full_res.raise_for_status()
             doc = full_res.json()
-            print("=== fallback JSON ===")
-            print(json.dumps(doc, ensure_ascii=False, indent=2))
             articles = doc.get("Law", {}).get("Article", [])
             if isinstance(articles, dict):
                 articles = [articles]
