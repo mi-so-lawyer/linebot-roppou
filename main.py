@@ -77,6 +77,7 @@ def handle_message(event):
             text_data = None
             for a in articles:
                 raw = a.get("Num", "")
+                print(f"Numの生値: {raw}")
                 normalized = normalize_num(raw)
                 print(f"比較: {normalized} == {article}")
                 if normalized == article:
