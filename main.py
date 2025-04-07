@@ -42,10 +42,15 @@ def handle_message(event):
     url = f"https://elaws.e-gov.go.jp/api/1/articles?lawId={law_id}&article={article}"
     try:
         res = requests.get(url)
+        res.raise_for_status()
         data = res.json()
+        print("=== e-Gov API レスポンス ===")
+        print(json.dumps(data, ensure_ascii=False, indent=2))
         text_data = data["Article"][0]["Paragraph"][0]["Sentence"][0]["Text"]
         reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
     except Exception as e:
+        print("=== エラー内容 ===")
+        print(e)
         reply = "取得に失敗しました"
 
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
