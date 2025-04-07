@@ -38,7 +38,9 @@ def handle_message(event):
 
     law, article = match.groups()
     article = re.sub(r"[第条]", "", article).translate(str.maketrans("０１２３４５６７８９", "0123456789"))
+    print(f"送られた法令名：{law}")
     law_id = next((law_map[name] for name in law_map if law.startswith(name)), None)
+    print(f"取得した law_id：{law_id}")
 
     if not law_id:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="その法令は未対応です"))
@@ -59,7 +61,15 @@ def handle_message(event):
     except Exception as e:
         print("=== 例外エラー ===")
         print(e)
-        reply = "取得に失敗しました"
+        reply = (
+            "取得に失敗しました。
+"
+            "・法令名や条番号に誤りがある
+"
+            "・対応していない法令かもしれません
+"
+            "・または通信タイムアウトの可能性があります"
+        )
 
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
 
