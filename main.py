@@ -32,7 +32,9 @@ def handle_message(event):
     text = event.message.text.strip()
     match = re.match(r"(.+?)第?([0-9０-９一二三四五六七八九十百千万]+)条", text)
     if not match:
-        reply = "法令名＋条番号の形式で送ってください（例：民法709条）"
+        reply = (
+            "法令名＋条番号の形式で送ってください（例：民法709条）"
+        )
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
         return
 
