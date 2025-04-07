@@ -61,19 +61,25 @@ def handle_message(event):
         text_data = data["Article"][0]["Paragraph"][0]["Sentence"][0]["Text"]
     except Exception as e:
         print("通常取得失敗、fallbackへ:", e)
-        # fallback: 全文取得から探す
         try:
             fallback_url = f"https://elaws.e-gov.go.jp/api/1/lawdata/{law_id}"
             full_res = requests.get(fallback_url)
             full_res.raise_for_status()
             doc = full_res.json()
             articles = doc.get("Law", {}).get("Article", [])
+            if isinstance(articles, dict):
+                articles = [articles]
+            text_data = None
             for a in articles:
                 if a.get("Num") == article:
-                    text_data = a["Paragraph"][0]["Sentence"][0]["Text"]
+                    para = a.get("Paragraph", [])
+                    if isinstance(para, dict):
+                        para = [para]
+                    sentences = para[0].get("Sentence", [])
+                    if isinstance(sentences, dict):
+                        sentences = [sentences]
+                    text_data = sentences[0].get("Text")
                     break
-            else:
-                text_data = None
         except Exception as e:
             print("fallbackも失敗:", e)
             text_data = None
