@@ -2,6 +2,7 @@ from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os, re, json, requests, sys
+import xml.etree.ElementTree as ET
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
@@ -73,35 +74,28 @@ def handle_message(event):
         log(f"通常取得失敗、fallbackへ: {e}")
         try:
             fallback_url = f"https://elaws.e-gov.go.jp/api/1/lawdata/{law_id}"
-            headers = {"Accept": "application/json"}
             log(f"🌐 fallback URL: {fallback_url}")
-            full_res = requests.get(fallback_url, headers=headers)
-            log(f"🌐 fallback status = {full_res.status_code}")
-            log(f"🌐 fallback raw = {full_res.text[:500]}")
-            full_res.raise_for_status()
-            doc = full_res.json()
-            articles = doc.get("Law", {}).get("Article", [])
-            if isinstance(articles, dict):
-                articles = [articles]
+            xml_res = requests.get(fallback_url)
+            xml_res.raise_for_status()
+            root = ET.fromstring(xml_res.text)
+
             text_data = None
-            for a in articles:
-                raw = a.get("Num", "")
+            for article_elem in root.findall(".//Article"):
+                raw = article_elem.get("Num", "")
                 normalized = normalize_num(raw)
+                log(f"XML比較: {normalized} == {article}")
                 if normalized == article:
-                    para = a.get("Paragraph", [])
-                    if isinstance(para, dict):
-                        para = [para]
-                    sentences = para[0].get("Sentence", [])
-                    if isinstance(sentences, dict):
-                        sentences = [sentences]
-                    text_data = sentences[0].get("Text")
-                    break
+                    sentence = article_elem.find(".//Sentence")
+                    if sentence is not None:
+                        text_data = sentence.text
+                        break
+
             if text_data is not None:
                 reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
-                log(f"fallback取得 reply = {reply!r}")
+                log(f"XML fallback取得 reply = {reply!r}")
             else:
                 reply = "取得に失敗しました。"
-                log(f"fallback取得失敗 reply = {reply!r}")
+                log(f"XML fallback取得失敗 reply = {reply!r}")
         except Exception as e:
             reply = "取得に失敗しました。"
             log(f"fallbackも例外: {e}")
