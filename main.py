@@ -73,25 +73,43 @@ def handle_message(event):
             full_res = requests.get(fallback_url, headers=headers)
             full_res.raise_for_status()
             doc = full_res.json()
-            articles = doc.get("Law", {}).get("Article", [])
-            if isinstance(articles, dict):
-                articles = [articles]
-            print("Article構造チェック:", type(articles), "件数:", len(articles))
+
             text_data = None
-            for a in articles:
-                raw = a.get("Num", "")
-                print(f"Numの生値: {raw}")
-                normalized = normalize_num(raw)
-                print(f"比較: {normalized} == {article}")
-                if normalized == article:
-                    para = a.get("Paragraph", [])
-                    if isinstance(para, dict):
-                        para = [para]
-                    sentences = para[0].get("Sentence", [])
-                    if isinstance(sentences, dict):
-                        sentences = [sentences]
-                    text_data = sentences[0].get("Text")
-                    print(f"text_data: {text_data}")
+            candidates = [
+                ["Law", "Article"],
+                ["Law", "MainProvision", "Article"],
+                ["Law", "Body", "Article"],
+                ["Law", "Provision", "Article"]
+            ]
+
+            for path in candidates:
+                node = doc
+                for p in path:
+                    node = node.get(p, {})
+                if isinstance(node, dict):
+                    articles = [node]
+                elif isinstance(node, list):
+                    articles = node
+                else:
+                    continue
+
+                print(f"パス {path} → Article件数: {len(articles)}")
+                for a in articles:
+                    raw = a.get("Num", "")
+                    print(f"Numの生値: {raw}")
+                    normalized = normalize_num(raw)
+                    print(f"比較: {normalized} == {article}")
+                    if normalized == article:
+                        para = a.get("Paragraph", [])
+                        if isinstance(para, dict):
+                            para = [para]
+                        sentences = para[0].get("Sentence", [])
+                        if isinstance(sentences, dict):
+                            sentences = [sentences]
+                        text_data = sentences[0].get("Text")
+                        print(f"text_data: {text_data}")
+                        break
+                if text_data:
                     break
         except Exception as e:
             print("fallbackも失敗:", e)
