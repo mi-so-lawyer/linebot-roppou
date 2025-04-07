@@ -68,6 +68,7 @@ def handle_message(event):
 
     try:
         url = f"https://elaws.e-gov.go.jp/api/1/articles?lawId={law_id}&article={article}"
+        log(f"▶ URL: {url}")
         res = requests.get(url)
         res.raise_for_status()
         data = res.json()
