@@ -84,8 +84,14 @@ def handle_message(event):
 
             for path in candidates:
                 node = doc
+                print(f"探索開始: {path}")
                 for p in path:
-                    node = node.get(p, {})
+                    if isinstance(node, dict):
+                        node = node.get(p, {})
+                    else:
+                        node = {}
+                print(f"到達ノード型: {type(node)}")
+
                 if isinstance(node, dict):
                     articles = [node]
                 elif isinstance(node, list):
