@@ -70,52 +70,36 @@ def handle_message(event):
         try:
             fallback_url = f"https://elaws.e-gov.go.jp/api/1/lawdata/{law_id}"
             headers = {"Accept": "application/json"}
+            print("fallback URL:", fallback_url)
             full_res = requests.get(fallback_url, headers=headers)
+            print("fallback status:", full_res.status_code)
+            print("fallback text (head):", full_res.text[:500])
             full_res.raise_for_status()
             doc = full_res.json()
 
             text_data = None
-            candidates = [
-                ["Law", "Article"],
-                ["Law", "MainProvision", "Article"],
-                ["Law", "Body", "Article"],
-                ["Law", "Provision", "Article"]
-            ]
+            articles = doc.get("Law", {}).get("Article", [])
+            if isinstance(articles, dict):
+                articles = [articles]
+            elif not isinstance(articles, list):
+                articles = []
 
-            for path in candidates:
-                node = doc
-                print(f"探索開始: {path}")
-                for p in path:
-                    if isinstance(node, dict):
-                        node = node.get(p, {})
-                    else:
-                        node = {}
-                print(f"到達ノード型: {type(node)}")
+            print("Article件数:", len(articles))
 
-                if isinstance(node, dict):
-                    articles = [node]
-                elif isinstance(node, list):
-                    articles = node
-                else:
-                    continue
-
-                print(f"パス {path} → Article件数: {len(articles)}")
-                for a in articles:
-                    raw = a.get("Num", "")
-                    print(f"Numの生値: {raw}")
-                    normalized = normalize_num(raw)
-                    print(f"比較: {normalized} == {article}")
-                    if normalized == article:
-                        para = a.get("Paragraph", [])
-                        if isinstance(para, dict):
-                            para = [para]
-                        sentences = para[0].get("Sentence", [])
-                        if isinstance(sentences, dict):
-                            sentences = [sentences]
-                        text_data = sentences[0].get("Text")
-                        print(f"text_data: {text_data}")
-                        break
-                if text_data:
+            for a in articles:
+                raw = a.get("Num", "")
+                print(f"Numの生値: {raw}")
+                normalized = normalize_num(raw)
+                print(f"比較: {normalized} == {article}")
+                if normalized == article:
+                    para = a.get("Paragraph", [])
+                    if isinstance(para, dict):
+                        para = [para]
+                    sentences = para[0].get("Sentence", [])
+                    if isinstance(sentences, dict):
+                        sentences = [sentences]
+                    text_data = sentences[0].get("Text")
+                    print(f"text_data: {text_data}")
                     break
         except Exception as e:
             print("fallbackも失敗:", e)
