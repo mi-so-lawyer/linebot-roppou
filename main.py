@@ -44,15 +44,15 @@ def handle_message(event):
     law_id = next((law_map[name] for name in law_map if law.startswith(name)), None)
     print(f"取得した law_id：{law_id}")
 
-    if not law_id:
-reply = (
-    "その法令は未対応です。\n"
-    "・法令名が正しくない\n"
-    "・lawlistに未登録の可能性があります"
-)
+if not law_id:
+    reply = (
+        "その法令は未対応です。\n"
+        "・法令名が正しくない\n"
+        "・lawlistに未登録の可能性があります"
+    )
+    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
+    return
 
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
-        return
 
     url = f"https://elaws.e-gov.go.jp/api/1/articles?lawId={law_id}&article={article}"
     try:
@@ -66,17 +66,17 @@ reply = (
         print(json.dumps(data, ensure_ascii=False, indent=2))
         text_data = data["Article"][0]["Paragraph"][0]["Sentence"][0]["Text"]
         reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
-    except Exception as e:
-        print("=== 例外エラー ===")
-        print(e)
-reply = (
-    "取得に失敗しました。\n"
-    "・法令名や条番号に誤りがある\n"
-    "・対応していない法令かもしれません\n"
-    "・または通信タイムアウトの可能性があります"
-)
-
+except Exception as e:
+    print("=== 例外エラー ===")
+    print(e)
+    reply = (
+        "取得に失敗しました。\n"
+        "・法令名や条番号に誤りがある\n"
+        "・対応していない法令かもしれません\n"
+        "・または通信タイムアウトの可能性があります"
+    )
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
