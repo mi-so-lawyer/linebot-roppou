@@ -43,7 +43,14 @@ def handle_message(event):
     print(f"取得した law_id：{law_id}")
 
     if not law_id:
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="その法令は未対応です"))
+        reply = (
+            "その法令は未対応です。
+"
+            "・法令名が正しくない
+"
+            "・lawlistに未登録の可能性があります"
+        )
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
         return
 
     url = f"https://elaws.e-gov.go.jp/api/1/articles?lawId={law_id}&article={article}"
