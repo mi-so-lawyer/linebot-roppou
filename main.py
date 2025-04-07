@@ -68,7 +68,8 @@ def handle_message(event):
         print("通常取得失敗、fallbackへ:", e)
         try:
             fallback_url = f"https://elaws.e-gov.go.jp/api/1/lawdata/{law_id}"
-            full_res = requests.get(fallback_url)
+            headers = {"Accept": "application/json"}
+            full_res = requests.get(fallback_url, headers=headers)
             full_res.raise_for_status()
             doc = full_res.json()
             articles = doc.get("Law", {}).get("Article", [])
