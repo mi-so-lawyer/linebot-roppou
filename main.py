@@ -7,9 +7,14 @@ app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 
-with open("lawlist.json", encoding="utf-8") as f:
-    lawlist = json.load(f)
-law_map = {entry["lawName"]: entry["lawId"] for entry in lawlist}
+try:
+    with open("lawlist.json", encoding="utf-8") as f:
+        lawlist = json.load(f)
+    law_map = {entry["lawName"]: entry["lawId"] for entry in lawlist}
+except Exception as e:
+    print("lawlist.json 読み込み失敗:", e)
+    lawlist = []
+    law_map = {}
 
 @app.route("/callback", methods=["POST"])
 def callback():
