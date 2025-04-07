@@ -41,6 +41,7 @@ def handle_message(event):
         reply = (
             "法令名＋条番号の形式で送ってください（例：民法709条）"
         )
+        print(f"最終reply = {reply!r}")
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
         return
 
@@ -56,6 +57,7 @@ def handle_message(event):
             "・法令名が正しくない\n"
             "・lawlistに未登録の可能性があります"
         )
+        print(f"最終reply = {reply!r}")
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
         return
 
@@ -70,27 +72,16 @@ def handle_message(event):
         try:
             fallback_url = f"https://elaws.e-gov.go.jp/api/1/lawdata/{law_id}"
             headers = {"Accept": "application/json"}
-            print("fallback URL:", fallback_url)
             full_res = requests.get(fallback_url, headers=headers)
-            print("fallback status:", full_res.status_code)
-            print("fallback text (head):", full_res.text[:500])
             full_res.raise_for_status()
             doc = full_res.json()
-
-            text_data = None
             articles = doc.get("Law", {}).get("Article", [])
             if isinstance(articles, dict):
                 articles = [articles]
-            elif not isinstance(articles, list):
-                articles = []
-
-            print("Article件数:", len(articles))
-
+            text_data = None
             for a in articles:
                 raw = a.get("Num", "")
-                print(f"Numの生値: {raw}")
                 normalized = normalize_num(raw)
-                print(f"比較: {normalized} == {article}")
                 if normalized == article:
                     para = a.get("Paragraph", [])
                     if isinstance(para, dict):
@@ -99,7 +90,6 @@ def handle_message(event):
                     if isinstance(sentences, dict):
                         sentences = [sentences]
                     text_data = sentences[0].get("Text")
-                    print(f"text_data: {text_data}")
                     break
         except Exception as e:
             print("fallbackも失敗:", e)
@@ -115,6 +105,7 @@ def handle_message(event):
             "・または通信タイムアウトの可能性があります"
         )
 
+    print(f"最終reply = {reply!r}")
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
 
 if __name__ == "__main__":
