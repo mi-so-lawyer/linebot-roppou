@@ -35,48 +35,39 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    print("メッセージ受信処理開始")
+    print("📩 handle_message invoked")
     text = event.message.text.strip()
     match = re.match(r"(.+?)第?([0-9０-９一二三四五六七八九十百千万]+(?:条の)?[0-9０-９一二三四五六七八九十百千万]*)条", text)
     if not match:
-        reply = (
-            "法令名＋条番号の形式で送ってください（例：民法709条）"
-        )
+        reply = "法令名＋条番号の形式で送ってください（例：民法709条）"
         print(f"最終reply = {reply!r}")
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
         return
-
     law, article = match.groups()
     article = normalize_num(article.translate(str.maketrans("０１２３４５６７８９", "0123456789")))
     print(f"送られた法令名：{law}")
     law_id = next((law_map[name] for name in law_map if law.startswith(name)), None)
     print(f"取得した law_id：{law_id}")
-
     if not law_id:
-        reply = (
-            "その法令は未対応です。\n"
-            "・法令名が正しくない\n"
-            "・lawlistに未登録の可能性があります"
-        )
+        reply = "その法令は未対応です。"
         print(f"最終reply = {reply!r}")
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
         return
-
     try:
-        print("通常取得ブロック突入")
+        print("▶ 通常取得開始")
         url = f"https://elaws.e-gov.go.jp/api/1/articles?lawId={law_id}&article={article}"
         res = requests.get(url)
         res.raise_for_status()
         data = res.json()
         text_data = data["Article"][0]["Paragraph"][0]["Sentence"][0]["Text"]
         reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
-        print(f"通常取得 reply = {reply!r}")
+        print(f"通常取得reply = {reply!r}")
     except Exception as e:
         print("通常取得失敗、fallbackへ:", e)
         try:
-            print("fallback取得ブロック突入")
             fallback_url = f"https://elaws.e-gov.go.jp/api/1/lawdata/{law_id}"
             headers = {"Accept": "application/json"}
+            print("🌐 fallback URL:", fallback_url)
             full_res = requests.get(fallback_url, headers=headers)
             full_res.raise_for_status()
             doc = full_res.json()
@@ -98,22 +89,17 @@ def handle_message(event):
                     break
             if text_data is not None:
                 reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
-                print(f"fallback取得 reply = {reply!r}")
+                print(f"fallback reply = {reply!r}")
             else:
-                raise ValueError("条文見つからず")
+                reply = "取得に失敗しました。"
+                print(f"fallback取得失敗 reply = {reply!r}")
         except Exception as e:
-            print("fallbackも失敗:", e)
-            reply = (
-                "取得に失敗しました。\n"
-                "・法令名や条番号に誤りがある\n"
-                "・対応していない法令かもしれません\n"
-                "・または通信タイムアウトの可能性があります"
-            )
-            print(f"エラーメッセージ reply = {reply!r}")
-
-    print(f"最終reply = {reply!r}")
+            reply = "取得に失敗しました。"
+            print("fallbackも例外:", e)
+    print(f"✅ 最終reply = {reply!r}")
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
 
 if __name__ == "__main__":
+    print("👁 MAIN.PY 起動しました")
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
