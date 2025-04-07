@@ -7,6 +7,11 @@ app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 
+def normalize_num(num):
+    num = re.sub(r"[第条]", "", num)
+    num = num.translate(str.maketrans("〇一二三四五六七八九", "0123456789"))
+    return num
+
 try:
     with open("lawlist.json", encoding="utf-8") as f:
         lawlist = json.load(f)
@@ -71,7 +76,10 @@ def handle_message(event):
                 articles = [articles]
             text_data = None
             for a in articles:
-                if a.get("Num") == article:
+                raw = a.get("Num", "")
+                normalized = normalize_num(raw)
+                print(f"比較: {normalized} == {article}")
+                if normalized == article:
                     para = a.get("Paragraph", [])
                     if isinstance(para, dict):
                         para = [para]
