@@ -45,13 +45,12 @@ def handle_message(event):
     print(f"取得した law_id：{law_id}")
 
     if not law_id:
-        reply = (
-            "その法令は未対応です。
-"
-            "・法令名が正しくない
-"
-            "・lawlistに未登録の可能性があります"
-        )
+reply = (
+    "その法令は未対応です。\n"
+    "・法令名が正しくない\n"
+    "・lawlistに未登録の可能性があります"
+)
+
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
         return
 
@@ -70,15 +69,12 @@ def handle_message(event):
     except Exception as e:
         print("=== 例外エラー ===")
         print(e)
-        reply = (
-            "取得に失敗しました。
-"
-            "・法令名や条番号に誤りがある
-"
-            "・対応していない法令かもしれません
-"
-            "・または通信タイムアウトの可能性があります"
-        )
+reply = (
+    "取得に失敗しました。\n"
+    "・法令名や条番号に誤りがある\n"
+    "・対応していない法令かもしれません\n"
+    "・または通信タイムアウトの可能性があります"
+)
 
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
 
