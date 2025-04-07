@@ -72,6 +72,8 @@ def handle_message(event):
             full_res = requests.get(fallback_url, headers=headers)
             full_res.raise_for_status()
             doc = full_res.json()
+            print("=== fallback JSON ===")
+            print(json.dumps(doc, ensure_ascii=False, indent=2))
             articles = doc.get("Law", {}).get("Article", [])
             if isinstance(articles, dict):
                 articles = [articles]
