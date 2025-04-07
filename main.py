@@ -68,11 +68,9 @@ def handle_message(event):
     except Exception as e:
         print("通常取得失敗、fallbackへ:", e)
         try:
-            fallback_url = f"https://elaws.e-gov.go.jp/api/1/lawdata/{law_id}"  # ← 確実に elaws 側を使う
+            fallback_url = f"https://elaws.e-gov.go.jp/api/1/lawdata/{law_id}"
             headers = {"Accept": "application/json"}
             full_res = requests.get(fallback_url, headers=headers)
-            print("fallback ステータスコード:", full_res.status_code)
-            print("fallback レスポンステキスト:", full_res.text[:1000])  # 長すぎるとき用に一部だけ表示
             full_res.raise_for_status()
             doc = full_res.json()
             articles = doc.get("Law", {}).get("Article", [])
@@ -92,13 +90,16 @@ def handle_message(event):
                     if isinstance(sentences, dict):
                         sentences = [sentences]
                     text_data = sentences[0].get("Text")
+                    print(f"text_data = {{text_data!r}}")
                     break
         except Exception as e:
             print("fallbackも失敗:", e)
             text_data = None
 
-    if text_data:
-        reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
+    print(f"最終判定前 text_data = {{text_data!r}}")
+
+    if text_data is not None:
+        reply = f"【{{law}} 第{{article}}条】\n{{text_data}}\n\n📎 https://laws.e-gov.go.jp/document?lawid={{law_id}}"
     else:
         reply = (
             "取得に失敗しました。\n"
