@@ -76,6 +76,7 @@ def handle_message(event):
             articles = doc.get("Law", {}).get("Article", [])
             if isinstance(articles, dict):
                 articles = [articles]
+            print("Article構造チェック:", type(articles), "件数:", len(articles))
             text_data = None
             for a in articles:
                 raw = a.get("Num", "")
@@ -90,16 +91,14 @@ def handle_message(event):
                     if isinstance(sentences, dict):
                         sentences = [sentences]
                     text_data = sentences[0].get("Text")
-                    print(f"text_data = {{text_data!r}}")
+                    print(f"text_data: {text_data}")
                     break
         except Exception as e:
             print("fallbackも失敗:", e)
             text_data = None
 
-    print(f"最終判定前 text_data = {{text_data!r}}")
-
     if text_data is not None:
-        reply = f"【{{law}} 第{{article}}条】\n{{text_data}}\n\n📎 https://laws.e-gov.go.jp/document?lawid={{law_id}}"
+        reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/document?lawid={law_id}"
     else:
         reply = (
             "取得に失敗しました。\n"
