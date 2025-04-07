@@ -68,11 +68,11 @@ def handle_message(event):
     except Exception as e:
         print("通常取得失敗、fallbackへ:", e)
         try:
-            fallback_url = f"https://elaws.e-gov.go.jp/api/1/lawdata/{law_id}"
+            fallback_url = f"https://elaws.e-gov.go.jp/api/1/lawdata/{law_id}"  # ← 確実に elaws 側を使う
             headers = {"Accept": "application/json"}
             full_res = requests.get(fallback_url, headers=headers)
             print("fallback ステータスコード:", full_res.status_code)
-            print("fallback レスポンステキスト:", full_res.text)
+            print("fallback レスポンステキスト:", full_res.text[:1000])  # 長すぎるとき用に一部だけ表示
             full_res.raise_for_status()
             doc = full_res.json()
             articles = doc.get("Law", {}).get("Article", [])
