@@ -73,7 +73,7 @@ def handle_message(event):
         res.raise_for_status()
         data = res.json()
         text_data = data["Article"][0]["Paragraph"][0]["Sentence"][0]["Text"]
-        reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://elaws.e-gov.go.jp/document?lawid={law_id}"
+        reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/laws/detail/{law_id}"
         log(f"通常取得 reply = {reply!r}")
     except Exception as e:
         log(f"通常取得失敗、fallbackへ: {e}")
@@ -95,7 +95,7 @@ def handle_message(event):
                         break
 
             if text_data is not None:
-                reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://elaws.e-gov.go.jp/document?lawid={law_id}"
+                reply = f"【{law} 第{article}条】\n{text_data}\n\n📎 https://laws.e-gov.go.jp/laws/detail/{law_id}"
                 log(f"XML fallback取得 reply = {reply!r}")
             else:
                 reply = "取得に失敗しました。"
